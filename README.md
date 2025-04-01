@@ -11,10 +11,10 @@ The scraper handles the dynamic pagination of the website, extracting data from 
 ## Features
 
 - Extracts member data from the CPA Ontario member directory
-- Handles dynamic page updates without URL changes
-- Saves data incrementally to prevent data loss in case of errors
+- Cleans member names (removes prefixes like ".,")
+- Saves to a single CSV file
+- Creates backup copies at specified intervals
 - Validates data to ensure uniqueness
-- Exports data to CSV format with timestamps
 
 ## Requirements
 
@@ -61,30 +61,55 @@ Run the scraper with:
 python cpa_scraper.py
 ```
 
-The script will:
+## Command Line Options
 
-1. Open a browser window (visible when `headless=False`)
-2. Navigate to the CPA Ontario member directory
-3. Extract data from the table on each page
-4. Handle pagination by clicking the "Next" button
-5. Save data to the `output` directory in CSV format
+The script accepts several command-line options:
 
-## Configuration
+```
+python cpa_scraper.py --help
+```
 
-You can modify the following parameters in the `main()` function of the script:
+Available options:
 
-- `url`: The URL of the CPA Ontario member directory
-- `output_dir`: Directory where CSV files will be saved
-- `max_pages`: Maximum number of pages to scrape (to prevent infinite loops)
+- `--url URL`: The URL of the CPA Ontario member directory
+- `--output-dir DIR`: Directory where CSV files will be saved (default: "output")
+- `--max-pages N`: Maximum number of pages to scrape (default: 80)
+- `--headless`: Run browser in headless mode (default: True)
+- `--backup-frequency N`: Create backup copy after every N pages (default: 10)
+
+Examples:
+
+```
+# Run with visible browser for debugging
+python cpa_scraper.py --headless=False
+
+# Scrape only first 5 pages
+python cpa_scraper.py --max-pages 5
+
+# Create backup copies more frequently
+python cpa_scraper.py --backup-frequency 5
+```
+
+## Output Files
+
+The script creates two types of files in the output directory:
+
+1. **Main data file**: `cpa_members_TIMESTAMP.csv` - Contains all scraped data, continuously updated as new pages are processed
+2. **Backup file**: `backup_cpa_members_TIMESTAMP.csv` - Created at intervals specified by `backup-frequency`
+
+Both files use the same timestamp generated at the start of the script run.
+
+## Data Cleaning
+
+The script automatically cleans member names by removing prefixes like ".,". For example:
+
+- "., Abdul Basit" becomes "Abdul Basit"
+- "., Akanksha" becomes "Akanksha"
 
 ## Troubleshooting
 
 If the scraper is not correctly navigating through pages:
 
-1. Set `headless=False` in the browser launch options to see what's happening
-2. Increase the wait times in the pagination handling
-3. Check the console output for error messages
-
-## License
-
-[Include license information here]
+1. Set `--headless=False` in the command line options to see what's happening
+2. Check the log file (`cpa_scraper.log`) for detailed information
+3. Increase the polling attempts or interval if needed
